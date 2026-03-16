@@ -1,0 +1,54 @@
+# Virtual Environment
+venv/
+.venv/
+env/
+ENV/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Data files (often large, store separately)
+data/raw/
+data/processed/
+*.csv
+*.parquet
+*.h5
+*.pkl
+
+# Environment variables / secrets
+.env
+.env.*
+secrets.json
+config/secrets.*
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+logs/
+*.log
+
+# Output / cache
+.cache/
+output/
