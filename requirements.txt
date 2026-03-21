@@ -1,10 +1,25 @@
+# Data Processing
 pandas
 numpy
+
+# Visualization
 matplotlib
 seaborn
 plotly
+
+# API & Data Fetching
 requests
+ccxt
+
+# Machine Learning
+scikit-learn
+
+# Web Dashboard
+streamlit
+
+# Jupyter
 jupyter
 ipykernel
+
+# Utilities
 python-dotenv
-ccxt

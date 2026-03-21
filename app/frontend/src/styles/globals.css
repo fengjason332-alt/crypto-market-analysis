@@ -1,0 +1,56 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---- Scrollbar (WebKit) ---- */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0b0e11;
+}
+::-webkit-scrollbar-thumb {
+  background: #2b2f36;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3a3f47;
+}
+
+/* ---- Utility classes ---- */
+@layer components {
+  .card {
+    @apply bg-bg-card border border-bg-border rounded-xl p-5 transition-colors;
+  }
+  .card:hover {
+    @apply border-bg-hover;
+  }
+  .badge {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold;
+  }
+  .badge-green {
+    @apply badge bg-accent-green/15 text-accent-green;
+  }
+  .badge-red {
+    @apply badge bg-accent-red/15 text-accent-red;
+  }
+  .badge-yellow {
+    @apply badge bg-accent-yellow/15 text-accent-yellow;
+  }
+  .badge-blue {
+    @apply badge bg-accent-blue/15 text-accent-blue;
+  }
+  .section-title {
+    @apply text-lg font-semibold text-text-primary mb-4;
+  }
+  .btn {
+    @apply px-4 py-2 rounded-lg text-sm font-medium transition-all duration-150;
+  }
+  .btn-primary {
+    @apply btn bg-accent-blue text-white hover:bg-accent-blue/80;
+  }
+  .btn-ghost {
+    @apply btn bg-transparent text-text-secondary hover:bg-bg-hover hover:text-text-primary;
+  }
+}

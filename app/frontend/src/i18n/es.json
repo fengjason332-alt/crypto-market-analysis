@@ -1,0 +1,79 @@
+{
+  "app_name": "CryptoScope",
+  "nav": {
+    "markets": "Mercados",
+    "technical": "Técnico",
+    "insights": "Insights IA",
+    "data": "Datos",
+    "watchlist": "Seguimiento"
+  },
+  "markets": {
+    "title": "Resumen del Mercado",
+    "hot_crypto": "Cripto Caliente",
+    "price": "Precio",
+    "change": "Cambio 24h",
+    "volume": "Volumen 24h",
+    "market_cap": "Cap. Mercado",
+    "price_trend": "Tendencia de Precio",
+    "no_data": "Sin datos. Ejecute el pipeline primero."
+  },
+  "technical": {
+    "title": "Análisis Técnico",
+    "select_asset": "Seleccionar Activo",
+    "overbought": "Sobrecompra",
+    "oversold": "Sobreventa"
+  },
+  "insights": {
+    "title": "Insights IA",
+    "signals": "Señales",
+    "sentiment": "Sentimiento del Mercado",
+    "prediction": "Predicción IA",
+    "onchain": "Datos On-Chain",
+    "bullish": "Alcista",
+    "bearish": "Bajista",
+    "neutral": "Neutral",
+    "fear": "Miedo",
+    "greed": "Avaricia",
+    "confidence": "Confianza",
+    "next_24h": "Pronóstico 24h",
+    "probability": "Probabilidad",
+    "active_addresses": "Direcciones Activas",
+    "exchange_inflow": "Flujo Entrada Exchange",
+    "exchange_outflow": "Flujo Salida Exchange",
+    "whale_txns": "Transacciones Ballena",
+    "signal_oversold_buy": "RSI indica sobreventa — oportunidad de compra potencial.",
+    "signal_overbought_sell": "RSI indica sobrecompra — considere tomar ganancias.",
+    "signal_downtrend": "Precio por debajo de SMA(20) — tendencia bajista.",
+    "signal_uptrend": "Precio por encima de SMA(20) — tendencia alcista.",
+    "signal_macd_bullish": "MACD cruzó sobre la señal — momento alcista.",
+    "signal_macd_bearish": "MACD cruzó bajo la señal — momento bajista.",
+    "signal_neutral": "Sin señal direccional fuerte en este momento."
+  },
+  "watchlist": {
+    "title": "Lista de Seguimiento",
+    "add": "Agregar Activo",
+    "remove": "Eliminar",
+    "portfolio_value": "Valor del Portafolio",
+    "amount": "Tenencias",
+    "empty": "Tu lista está vacía. Agrega activos para comenzar."
+  },
+  "data": {
+    "title": "Explorador de Datos",
+    "rows": "filas",
+    "download": "Descargar CSV",
+    "columns": "Seleccionar Columnas"
+  },
+  "time": {
+    "all": "Todo",
+    "30d": "30D",
+    "90d": "90D",
+    "180d": "180D",
+    "1y": "1A"
+  },
+  "common": {
+    "assets": "Activos",
+    "period": "Período",
+    "loading": "Cargando...",
+    "error": "Algo salió mal."
+  }
+}

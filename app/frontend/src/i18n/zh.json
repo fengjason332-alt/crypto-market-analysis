@@ -1,0 +1,79 @@
+{
+  "app_name": "CryptoScope",
+  "nav": {
+    "markets": "市场",
+    "technical": "技术分析",
+    "insights": "AI 洞察",
+    "data": "数据",
+    "watchlist": "自选"
+  },
+  "markets": {
+    "title": "市场概览",
+    "hot_crypto": "热门币种",
+    "price": "价格",
+    "change": "24h 涨跌",
+    "volume": "24h 成交量",
+    "market_cap": "市值",
+    "price_trend": "价格走势",
+    "no_data": "暂无数据，请先运行数据管道。"
+  },
+  "technical": {
+    "title": "技术分析",
+    "select_asset": "选择币种",
+    "overbought": "超买",
+    "oversold": "超卖"
+  },
+  "insights": {
+    "title": "AI 洞察",
+    "signals": "交易信号",
+    "sentiment": "市场情绪",
+    "prediction": "AI 预测",
+    "onchain": "链上数据",
+    "bullish": "看涨",
+    "bearish": "看跌",
+    "neutral": "中性",
+    "fear": "恐惧",
+    "greed": "贪婪",
+    "confidence": "置信度",
+    "next_24h": "未来24小时预测",
+    "probability": "概率",
+    "active_addresses": "活跃地址数",
+    "exchange_inflow": "交易所流入",
+    "exchange_outflow": "交易所流出",
+    "whale_txns": "巨鲸交易",
+    "signal_oversold_buy": "RSI 显示超卖 — 潜在买入机会。",
+    "signal_overbought_sell": "RSI 显示超买 — 考虑获利了结。",
+    "signal_downtrend": "价格低于 SMA(20) — 下跌趋势中。",
+    "signal_uptrend": "价格高于 SMA(20) — 上涨趋势延续。",
+    "signal_macd_bullish": "MACD 上穿信号线 — 多头动能。",
+    "signal_macd_bearish": "MACD 下穿信号线 — 空头动能。",
+    "signal_neutral": "当前无明确方向信号。"
+  },
+  "watchlist": {
+    "title": "自选列表",
+    "add": "添加币种",
+    "remove": "移除",
+    "portfolio_value": "组合价值",
+    "amount": "持有量",
+    "empty": "自选列表为空，添加币种开始追踪。"
+  },
+  "data": {
+    "title": "数据浏览",
+    "rows": "行",
+    "download": "下载 CSV",
+    "columns": "选择列"
+  },
+  "time": {
+    "all": "全部",
+    "30d": "30天",
+    "90d": "90天",
+    "180d": "180天",
+    "1y": "1年"
+  },
+  "common": {
+    "assets": "币种",
+    "period": "时间",
+    "loading": "加载中...",
+    "error": "出错了。"
+  }
+}
