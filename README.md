@@ -1,90 +1,103 @@
 # Crypto Market Analysis
 
-A Python-based project for analyzing cryptocurrency market data — combining data science, financial modeling, and crypto market insights.
+**Can freely available market data + standard ML techniques produce meaningful next-day signals for BTC, ETH, and SOL?**
 
-## Project Structure
+A Python data pipeline + interactive dashboards built to find out.
+
+---
+
+## What I Learned
+
+The most valuable outcome wasn't "a great predictor" — it was discovering how easy it is for time-series models to look good until you compare them against a naive baseline ("tomorrow = today"). On some coins, the baseline was hard to beat. That single comparison changed how I think about ML evaluation.
+
+## Architecture
 
 ```
 crypto-market-analysis/
+├── src/                          # Python pipeline
+│   ├── fetch_data.py             # Phase 1: CoinGecko API data ingestion
+│   ├── clean_data.py             # Phase 2: Cleaning & preprocessing
+│   ├── indicators.py             # Phase 3: RSI, MACD, Bollinger Bands, SMA/EMA
+│   ├── visualize.py              # Phase 4: Chart generation (matplotlib)
+│   ├── correlation.py            # Phase 5: Cross-asset correlation analysis
+│   └── ml_model.py               # Phase 6: ML forecasting + naive baseline + walk-forward CV
 ├── app/
-│   └── dashboard.py        # Phase 7: Streamlit 交互式仪表盘
-├── data/
-│   ├── cleaned/            # 清洗后的数据
-│   └── indicators/         # 带技术指标的数据
-├── images/                 # 生成的图表
-├── notebooks/              # Jupyter notebooks
-├── src/
-│   ├── fetch_data.py       # Phase 1: 数据采集（CoinGecko API）
-│   ├── clean_data.py       # Phase 2: 数据清洗与预处理
-│   ├── indicators.py       # Phase 3: 技术指标（RSI, MACD, Bollinger Bands）
-│   ├── visualize.py        # Phase 4: 数据可视化
-│   ├── correlation.py      # Phase 5: 相关性分析
-│   └── ml_model.py         # Phase 6: ML 价格预测
-├── requirements.txt
-└── README.md
+│   ├── dashboard.py              # Phase 7: Streamlit dashboard (dark theme, i18n)
+│   └── frontend/                 # React/Vite "CryptoScope" UI prototype
+│       ├── src/pages/            #   Markets, Technical, Insights, Watchlist, Data
+│       ├── src/components/       #   MetricCard, AIInsightCard, PredictionCard, etc.
+│       ├── src/utils/            #   signals.js, sentiment.js, predictions.js (heuristic)
+│       └── src/i18n/             #   EN / 中文 / ES locale files
+├── tests/                        # pytest unit tests for indicators & features
+├── docs/                         # Methodology documentation
+├── data/                         # Generated data (not committed)
+└── images/                       # Generated charts (not committed)
 ```
 
-## Setup
+## Key Features
 
-### 1. Clone the repo
+**Python Pipeline:**
+- 7-phase workflow: fetch → clean → indicators → visualize → correlation → ML → dashboard
+- CoinGecko API with rate-limit-aware pacing
+- 4 ML models + naive baseline, evaluated with RMSE/MAE/R²/MAPE
+- Walk-forward cross-validation via `TimeSeriesSplit` (`--cv` flag)
+
+**CryptoScope React Frontend:**
+- Exchange-inspired dark UI (OKX/Binance style)
+- Sentiment gauge, rule-based signals, 24h forecast (explicitly heuristic, not real ML)
+- Watchlist + mock portfolio with localStorage persistence
+- i18n: English, 中文, Español
+
+**Streamlit Dashboard:**
+- Interactive Plotly charts with OKX-style dark theme
+- Markets / Technical / Correlation / Data explorer tabs
+- Multi-language support (EN / 中文 / ES)
+
+## Quick Start
+
 ```bash
+# Clone & setup
 git clone https://github.com/fengjason332-alt/crypto-market-analysis.git
 cd crypto-market-analysis
-```
-
-### 2. Create & activate virtual environment
-```bash
-python3 -m venv venv
-source venv/bin/activate   # macOS/Linux
-```
-
-### 3. Install dependencies
-```bash
+python3 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
+
+# Run the pipeline
+python src/fetch_data.py          # Fetch 365 days of BTC/ETH/SOL data
+python src/clean_data.py          # Clean & merge
+python src/indicators.py          # Compute technical indicators
+python src/visualize.py           # Generate charts
+python src/correlation.py         # Cross-asset correlation
+python src/ml_model.py            # ML prediction (default: 80/20 split)
+python src/ml_model.py --cv       # ML prediction (walk-forward CV)
+
+# Launch dashboards
+streamlit run app/dashboard.py    # Streamlit dashboard
+
+# React frontend (separate terminal)
+cd app/frontend && npm install && npm run dev
 ```
 
-## Pipeline — 按顺序运行
+## Run Tests
 
 ```bash
-# Phase 1: 拉取数据
-python src/fetch_data.py
-
-# Phase 2: 清洗数据
-python src/clean_data.py
-
-# Phase 3: 计算技术指标
-python src/indicators.py
-
-# Phase 4: 生成图表
-python src/visualize.py
-
-# Phase 5: 相关性分析
-python src/correlation.py
-
-# Phase 6: ML 价格预测
-python src/ml_model.py
-
-# Phase 7: 启动仪表盘
-streamlit run app/dashboard.py
+pytest tests/ -v
 ```
 
 ## Tech Stack
 
-- **Python 3.10+**
-- **pandas / numpy** — data processing
-- **matplotlib / seaborn / plotly** — visualization
-- **scikit-learn** — machine learning (Linear Regression, Random Forest, Gradient Boosting)
-- **streamlit** — interactive web dashboard
-- **requests / ccxt** — crypto market data APIs
+| Layer | Tools |
+|-------|-------|
+| Data | pandas, numpy, CoinGecko API, ccxt |
+| ML | scikit-learn (Linear, Ridge, Random Forest, Gradient Boosting) |
+| Visualization | matplotlib, seaborn, plotly |
+| Dashboard | Streamlit |
+| Frontend | React 18, Vite, Recharts, Tailwind CSS |
+| Testing | pytest |
 
-## Features
+## Methodology
 
-- Fetch historical price data for BTC, ETH, SOL from CoinGecko
-- Data cleaning: handle missing values, duplicates, outliers
-- Technical indicators: SMA, EMA, RSI(14), MACD, Bollinger Bands
-- Correlation analysis: price/return correlation, rolling correlation
-- ML models: price prediction with 4 models and performance comparison
-- Interactive Streamlit dashboard with real-time charts
+See [docs/METHODOLOGY.md](docs/METHODOLOGY.md) for details on target definition, baseline selection, evaluation strategy, and which "AI" modules in the React app are heuristic vs real ML.
 
 ## Author
 
