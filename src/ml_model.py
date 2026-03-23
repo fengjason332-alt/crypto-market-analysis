@@ -47,6 +47,19 @@ import matplotlib.dates as mdates
 
 warnings.filterwarnings("ignore")
 
+# ============================================================
+# 通用指标计算（被 train_and_evaluate 和 walk_forward_evaluate 共用）
+# ============================================================
+
+def compute_metrics(y_true, y_pred) -> dict:
+    """计算四个标准回归指标，返回字典。"""
+    return {
+        "rmse": np.sqrt(mean_squared_error(y_true, y_pred)),
+        "mae": mean_absolute_error(y_true, y_pred),
+        "r2": r2_score(y_true, y_pred),
+        "mape": mean_absolute_percentage_error(y_true, y_pred) * 100,
+    }
+
 
 # ============================================================
 # 配置
@@ -155,16 +168,6 @@ def get_feature_columns(df: pd.DataFrame) -> list:
 # 模型训练与评估
 # ============================================================
 
-def compute_metrics(y_true, y_pred) -> dict:
-    """计算四个标准回归指标，返回字典。"""
-    return {
-        "rmse": np.sqrt(mean_squared_error(y_true, y_pred)),
-        "mae": mean_absolute_error(y_true, y_pred),
-        "r2": r2_score(y_true, y_pred),
-        "mape": mean_absolute_percentage_error(y_true, y_pred) * 100,
-    }
-
-
 def train_and_evaluate(df: pd.DataFrame, coin: str = "BTC") -> dict:
     """
     训练多个模型并评估性能。
@@ -213,18 +216,13 @@ def train_and_evaluate(df: pd.DataFrame, coin: str = "BTC") -> dict:
     results = {}
 
     # ---- Naive Baseline: "明天的价格 = 今天的价格" ----
+    # 这是时间序列预测中最基本的基准模型
+    # 如果 ML 模型打不过它，说明模型没有学到有用的信号
     y_pred_naive = df["price"].values[split_idx : split_idx + len(y_test)]
 
-    naive_rmse = np.sqrt(mean_squared_error(y_test, y_pred_naive))
-    naive_mae = mean_absolute_error(y_test, y_pred_naive)
-    naive_r2 = r2_score(y_test, y_pred_naive)
-    naive_mape = mean_absolute_percentage_error(y_test, y_pred_naive) * 100
-
+    naive_metrics = compute_metrics(y_test, y_pred_naive)
     results["▶ Naive Baseline"] = {
-        "rmse": naive_rmse,
-        "mae": naive_mae,
-        "r2": naive_r2,
-        "mape": naive_mape,
+        **naive_metrics,
         "y_test": y_test,
         "y_pred": y_pred_naive,
         "dates": dates_test,
@@ -232,10 +230,10 @@ def train_and_evaluate(df: pd.DataFrame, coin: str = "BTC") -> dict:
     }
 
     print(f"\n  ▶ Naive Baseline (tomorrow = today):")
-    print(f"    RMSE:  ${naive_rmse:,.2f}")
-    print(f"    MAE:   ${naive_mae:,.2f}")
-    print(f"    R²:    {naive_r2:.4f}")
-    print(f"    MAPE:  {naive_mape:.2f}%")
+    print(f"    RMSE:  ${naive_metrics['rmse']:,.2f}")
+    print(f"    MAE:   ${naive_metrics['mae']:,.2f}")
+    print(f"    R²:    {naive_metrics['r2']:.4f}")
+    print(f"    MAPE:  {naive_metrics['mape']:.2f}%")
 
     for name, model in models.items():
         print(f"\n  训练 {name}...")
@@ -273,6 +271,91 @@ def train_and_evaluate(df: pd.DataFrame, coin: str = "BTC") -> dict:
     return results
 
 
+def walk_forward_evaluate(df: pd.DataFrame, coin: str = "BTC", n_splits: int = 5) -> dict:
+    """
+    Walk-forward cross-validation（滚动窗口验证）。
+
+    和 train_and_evaluate() 的区别：
+    - 不是一刀切 80/20，而是滚动切分 5 次
+    - 每个 fold 独立 fit scaler（防止未来数据泄漏到 scaler 统计量）
+    - 输出 mean ± std 指标，比单一数字更可靠
+
+    参数：
+        df: 包含特征和 target 的 DataFrame（由 create_features 生成）
+        coin: 币种名（用于打印标题）
+        n_splits: 交叉验证折数，默认 5
+    """
+    feature_cols = get_feature_columns(df)
+    X = df[feature_cols].values
+    y = df["target"].values
+
+    tscv = TimeSeriesSplit(n_splits=n_splits)
+
+    model_configs = {
+        "Linear Regression": lambda: LinearRegression(),
+        "Ridge Regression": lambda: Ridge(alpha=1.0),
+        "Random Forest": lambda: RandomForestRegressor(
+            n_estimators=100, max_depth=10, random_state=42, n_jobs=-1
+        ),
+        "Gradient Boosting": lambda: GradientBoostingRegressor(
+            n_estimators=100, max_depth=5, learning_rate=0.1, random_state=42
+        ),
+    }
+
+    all_model_names = ["▶ Naive Baseline"] + list(model_configs.keys())
+    cv_results = {name: {"rmse": [], "mae": [], "r2": [], "mape": []}
+                  for name in all_model_names}
+
+    for fold, (train_idx, test_idx) in enumerate(tscv.split(X)):
+        print(f"\n  --- Fold {fold + 1}/{n_splits} "
+              f"(Train: {len(train_idx)}, Test: {len(test_idx)}) ---")
+
+        X_train, X_test = X[train_idx], X[test_idx]
+        y_train, y_test = y[train_idx], y[test_idx]
+
+        # ★ 关键：每个 fold 都重新 fit scaler
+        scaler = StandardScaler()
+        X_train_scaled = scaler.fit_transform(X_train)
+        X_test_scaled = scaler.transform(X_test)
+
+        # Naive baseline for this fold
+        y_pred_naive = df["price"].values[test_idx]
+        for k, v in compute_metrics(y_test, y_pred_naive).items():
+            cv_results["▶ Naive Baseline"][k].append(v)
+
+        # Train each model on this fold
+        for name, model_fn in model_configs.items():
+            model = model_fn()
+
+            if "Forest" in name or "Boosting" in name:
+                model.fit(X_train, y_train)
+                y_pred = model.predict(X_test)
+            else:
+                model.fit(X_train_scaled, y_train)
+                y_pred = model.predict(X_test_scaled)
+
+            for k, v in compute_metrics(y_test, y_pred).items():
+                cv_results[name][k].append(v)
+
+    # 打印汇总表
+    print(f"\n{'=' * 80}")
+    print(f"  {coin.upper()} — Walk-Forward CV Summary ({n_splits} folds)")
+    print(f"{'=' * 80}")
+    print(f"  {'Model':<25} {'RMSE':>14} {'MAE':>14} {'R²':>12} {'MAPE':>10}")
+    print(f"  {'-' * 75}")
+
+    for name in all_model_names:
+        r = cv_results[name]
+        print(f"  {name:<25} "
+              f"${np.mean(r['rmse']):>8,.0f}±{np.std(r['rmse']):>4,.0f}  "
+              f"${np.mean(r['mae']):>8,.0f}±{np.std(r['mae']):>4,.0f}  "
+              f"{np.mean(r['r2']):>6.3f}±{np.std(r['r2']):.3f}  "
+              f"{np.mean(r['mape']):>5.1f}±{np.std(r['mape']):.1f}%")
+
+    print(f"{'=' * 80}")
+    return cv_results
+
+
 def plot_predictions(results: dict, coin: str = "btc") -> None:
     """
     绘制预测 vs 实际价格对比图。
@@ -283,7 +366,9 @@ def plot_predictions(results: dict, coin: str = "btc") -> None:
     fig, axes = plt.subplots(2, 2, figsize=(16, 10))
     axes = axes.flatten()
 
-    for i, (name, res) in enumerate(results.items()):
+    plot_results = {k: v for k, v in results.items() if v.get("model") is not None}
+
+    for i, (name, res) in enumerate(plot_results.items()):
         if i >= len(axes):
             break
         ax = axes[i]
@@ -293,6 +378,11 @@ def plot_predictions(results: dict, coin: str = "btc") -> None:
                 linewidth=1.5, alpha=0.8, label="Actual")
         ax.plot(dates, res["y_pred"], color=color,
                 linewidth=1.5, alpha=0.9, label="Predicted")
+        # 画 naive baseline 参考线（灰色虚线）
+        if "▶ Naive Baseline" in results:
+            bres = results["▶ Naive Baseline"]
+            ax.plot(pd.to_datetime(bres["dates"]), bres["y_pred"],
+                    color="#666", linewidth=1, linestyle="--", alpha=0.5, label="Naive")
 
         ax.set_title(f"{name}\nR²={res['r2']:.3f}  MAPE={res['mape']:.1f}%",
                      fontsize=11, fontweight="bold")
@@ -338,92 +428,6 @@ def plot_feature_importance(model, feature_names: list, coin: str = "btc",
 
 
 # ============================================================
-# Walk-Forward Cross-Validation
-# ============================================================
-
-def walk_forward_evaluate(df: pd.DataFrame, coin: str = "BTC", n_splits: int = 5) -> dict:
-    """
-    Walk-forward 滚动窗口交叉验证。
-
-    与单次 80/20 分割的区别：
-    - 做 n_splits 次分割，每次训练窗口扩大，测试窗口滚动前进
-    - 每个 fold 独立 fit scaler（防止信息泄漏）
-    - 输出 mean ± std，比单一数字更可靠
-
-    使用方式：python src/ml_model.py --cv
-    """
-    feature_cols = get_feature_columns(df)
-    X = df[feature_cols].values
-    y = df["target"].values
-
-    tscv = TimeSeriesSplit(n_splits=n_splits)
-
-    model_configs = {
-        "Linear Regression": lambda: LinearRegression(),
-        "Ridge Regression": lambda: Ridge(alpha=1.0),
-        "Random Forest": lambda: RandomForestRegressor(
-            n_estimators=100, max_depth=10, random_state=42, n_jobs=-1
-        ),
-        "Gradient Boosting": lambda: GradientBoostingRegressor(
-            n_estimators=100, max_depth=5, learning_rate=0.1, random_state=42
-        ),
-    }
-
-    all_model_names = ["▶ Naive Baseline"] + list(model_configs.keys())
-    cv_results = {name: {"rmse": [], "mae": [], "r2": [], "mape": []}
-                  for name in all_model_names}
-
-    for fold, (train_idx, test_idx) in enumerate(tscv.split(X)):
-        print(f"\n  --- Fold {fold + 1}/{n_splits} "
-              f"(Train: {len(train_idx)}, Test: {len(test_idx)}) ---")
-
-        X_train, X_test = X[train_idx], X[test_idx]
-        y_train, y_test = y[train_idx], y[test_idx]
-
-        # 每个 fold 重新 fit scaler（防止未来数据泄漏）
-        scaler = StandardScaler()
-        X_train_scaled = scaler.fit_transform(X_train)
-        X_test_scaled = scaler.transform(X_test)
-
-        # Naive baseline: 用当前行的 price 作为"明天"的预测
-        y_pred_naive = df["price"].values[test_idx]
-        for k, v in compute_metrics(y_test, y_pred_naive).items():
-            cv_results["▶ Naive Baseline"][k].append(v)
-
-        # 训练每个 ML 模型
-        for name, model_fn in model_configs.items():
-            model = model_fn()
-
-            if "Forest" in name or "Boosting" in name:
-                model.fit(X_train, y_train)
-                y_pred = model.predict(X_test)
-            else:
-                model.fit(X_train_scaled, y_train)
-                y_pred = model.predict(X_test_scaled)
-
-            for k, v in compute_metrics(y_test, y_pred).items():
-                cv_results[name][k].append(v)
-
-    # 打印汇总表
-    print(f"\n{'=' * 80}")
-    print(f"  {coin.upper()} — Walk-Forward CV Summary ({n_splits} folds)")
-    print(f"{'=' * 80}")
-    print(f"  {'Model':<25} {'RMSE':>14} {'MAE':>14} {'R²':>12} {'MAPE':>10}")
-    print(f"  {'-' * 75}")
-
-    for name in all_model_names:
-        r = cv_results[name]
-        print(f"  {name:<25} "
-              f"${np.mean(r['rmse']):>8,.0f}±{np.std(r['rmse']):>4,.0f}  "
-              f"${np.mean(r['mae']):>8,.0f}±{np.std(r['mae']):>4,.0f}  "
-              f"{np.mean(r['r2']):>6.3f}±{np.std(r['r2']):.3f}  "
-              f"{np.mean(r['mape']):>5.1f}±{np.std(r['mape']):.1f}%")
-
-    print(f"{'=' * 80}")
-    return cv_results
-
-
-# ============================================================
 # 命令行入口
 # ============================================================
 
@@ -431,7 +435,7 @@ def main():
     parser = argparse.ArgumentParser(description="加密货币 ML 价格预测")
     parser.add_argument("--coin", type=str, default=None, help="指定币种")
     parser.add_argument("--cv", action="store_true",
-                        help="启用 walk-forward cross-validation（默认关闭）")
+                        help="启用 walk-forward cross-validation（默认关闭，使用单次 80/20 split）")
 
     args = parser.parse_args()
     coins = [args.coin] if args.coin else SUPPORTED_COINS
@@ -459,32 +463,32 @@ def main():
             print(f"  特征数量: {len(feature_cols)}")
             print(f"  样本数量: {len(df_features)}")
 
+            # 训练和评估
             if args.cv:
-                # Walk-Forward Cross-Validation 模式
                 print("\n[Walk-Forward Cross-Validation]")
                 cv_results = walk_forward_evaluate(df_features, coin)
+                # walk-forward 模式下跳过单次 split 的可视化（不适用）
+                continue
             else:
-                # 默认：单次 80/20 分割
-                print("\n[模型训练]")
+                print("\n[模型训练（单次 80/20 split + Naive Baseline）]")
                 results = train_and_evaluate(df_features, coin)
 
-                # 可视化
-                print("\n[生成图表]")
-                plot_predictions(results, coin)
+            # 可视化
+            print("\n[生成图表]")
+            plot_predictions(results, coin)
 
-                # 特征重要性（使用随机森林模型）
-                if "Random Forest" in results:
-                    rf_model = results["Random Forest"]["model"]
-                    plot_feature_importance(rf_model, feature_cols, coin)
+            # 特征重要性（使用随机森林模型）
+            if "Random Forest" in results:
+                rf_model = results["Random Forest"]["model"]
+                plot_feature_importance(rf_model, feature_cols, coin)
 
-            # 打印模型对比（仅在非 CV 模式下）
-            if not args.cv:
-                print(f"\n[{coin.upper()} 模型对比]")
-                print(f"{'模型':<25} {'RMSE':>12} {'MAE':>12} {'R²':>8} {'MAPE':>8}")
-                print("-" * 65)
-                for name, res in sorted(results.items(), key=lambda x: x[1]["mape"]):
-                    print(f"{name:<25} ${res['rmse']:>10,.2f} ${res['mae']:>10,.2f} "
-                          f"{res['r2']:>7.4f} {res['mape']:>6.2f}%")
+            # 打印模型对比
+            print(f"\n[{coin.upper()} 模型对比]")
+            print(f"{'模型':<25} {'RMSE':>12} {'MAE':>12} {'R²':>8} {'MAPE':>8}")
+            print("-" * 65)
+            for name, res in sorted(results.items(), key=lambda x: x[1]["mape"]):
+                print(f"{name:<25} ${res['rmse']:>10,.2f} ${res['mae']:>10,.2f} "
+                      f"{res['r2']:>7.4f} {res['mape']:>6.2f}%")
 
         except FileNotFoundError:
             print(f"  ✗ 找不到 {coin} 指标数据，请先运行 indicators.py")
