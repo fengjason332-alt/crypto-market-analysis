@@ -13,6 +13,7 @@ import InsightsPage from "./pages/InsightsPage";
 import DataPage from "./pages/DataPage";
 import WatchlistPanel from "./components/WatchlistPanel";
 import { useLanguage } from "./hooks/useLanguage";
+import { useMarketData } from "./hooks/useMarketData";
 
 const TIME_OPTIONS = [
   { key: "all", days: null },
@@ -26,11 +27,20 @@ const AVAILABLE_COINS = ["BTC", "ETH", "SOL"];
 
 export default function App() {
   const { t } = useLanguage();
+  const { ready } = useMarketData();
   const [activeTab, setActiveTab] = useState("markets");
   const [selectedCoins, setSelectedCoins] = useState(["BTC", "ETH", "SOL"]);
   const [timeKey, setTimeKey] = useState("all");
 
   const timeDays = TIME_OPTIONS.find((o) => o.key === timeKey)?.days || null;
+
+  if (!ready) {
+    return (
+      <div className="min-h-screen bg-bg-primary flex items-center justify-center">
+        <div className="text-text-muted text-sm">Loading market data...</div>
+      </div>
+    );
+  }
 
   const toggleCoin = (coin) => {
     setSelectedCoins((prev) =>

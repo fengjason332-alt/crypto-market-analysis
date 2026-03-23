@@ -95,11 +95,13 @@ class TestBollingerBands:
         assert abs(last["bb_lower"] - 75.0) < 0.01
 
     def test_bb_upper_above_lower(self):
-        """对任意波动序列，上轨应始终 >= 下轨。"""
+        """对任意波动序列，热身期之后上轨应始终 >= 下轨。"""
         np.random.seed(42)
         prices = pd.Series(np.cumsum(np.random.randn(100)) + 100)
         result = bollinger_bands(prices)
-        assert (result["bb_upper"] >= result["bb_lower"]).all()
+        # 跳过前 20 行热身期（rolling window=20 还没填满）
+        tail = result.iloc[20:]
+        assert (tail["bb_upper"] >= tail["bb_lower"]).all()
 
 
 class TestAddAllIndicators:

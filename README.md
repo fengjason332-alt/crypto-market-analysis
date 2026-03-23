@@ -4,7 +4,25 @@
 
 A Python data pipeline + interactive dashboards built to find out.
 
+![Model Comparison](docs/model_comparison.png)
+
 ---
+
+## ML Model Comparison
+
+BTC next-day price prediction (80/20 chronological split, 333 samples, 43 features):
+
+**BTC (单次 80/20 split):**
+
+| Model | RMSE | MAE | R² | MAPE |
+|-------|------|-----|-----|------|
+| ▶ Naive Baseline | $2,435.08 | $1,672.67 | 0.9324 | 2.31% |
+| Ridge Regression | $2,910.40 | $2,052.46 | 0.9034 | 2.82% |
+| Linear Regression | $4,547.32 | $3,510.76 | 0.7641 | 4.88% |
+| Random Forest | $18,431.28 | $16,337.74 | -2.8748 | 23.55% |
+| Gradient Boosting | $18,289.89 | $16,469.50 | -2.8156 | 23.61% |
+
+> The naive baseline outperformed all four ML models on BTC. The pattern held across ETH and SOL as well — tree-based models (Random Forest, Gradient Boosting) performed especially poorly with negative R² values, meaning they were worse than simply predicting the mean. Only Ridge Regression came close to the baseline, suggesting the signal in technical indicators is weak for next-day price prediction.
 
 ## What I Learned
 
