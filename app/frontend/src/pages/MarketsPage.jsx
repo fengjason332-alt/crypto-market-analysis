@@ -12,10 +12,27 @@ import { formatUSD, formatCompact, formatPercent } from "../utils/formatters";
 
 export default function MarketsPage({ selectedCoins, timeDays }) {
   const { t } = useLanguage();
-  const { snapshots, getHistory, coinMeta } = useMarketData(selectedCoins);
+  const { snapshots, getHistory, coinMeta, loading, dataSource } = useMarketData(selectedCoins);
 
   return (
     <div>
+      {/* Data source indicator */}
+      {loading && (
+        <div className="text-center text-text-muted text-sm py-4">
+          Loading live market data from CoinGecko...
+        </div>
+      )}
+      {!loading && dataSource === "live" && (
+        <div className="text-center text-xs text-accent-green/60 py-2">
+          ● Live data from CoinGecko
+        </div>
+      )}
+      {!loading && dataSource === "mock" && (
+        <div className="text-center text-xs text-accent-yellow/60 py-2">
+          ● Using simulated data (API unavailable)
+        </div>
+      )}
+
       {/* Metric cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         {snapshots.map((snap) => (

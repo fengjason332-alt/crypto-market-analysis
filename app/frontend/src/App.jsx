@@ -121,7 +121,10 @@ export default function App() {
 
       {/* Footer */}
       <footer className="text-center text-xs text-text-muted py-8 border-t border-bg-border">
-        CryptoScope · Built by Jason Feng · University of Utah · 2026
+        <div>CryptoScope · Built by Jason Feng · University of Utah · 2026</div>
+        <div className="mt-1 text-text-muted/50">
+          Data: CoinGecko API (live) with mock fallback · On-chain data is simulated
+        </div>
       </footer>
     </div>
   );
