@@ -8,6 +8,7 @@ import { useState } from "react";
 import { useLanguage } from "../hooks/useLanguage";
 import { useMarketData } from "../hooks/useMarketData";
 import PriceChart from "../components/PriceChart";
+import IndicatorInfo from "../components/IndicatorInfo";
 
 export default function TechnicalPage({ selectedCoins, timeDays }) {
   const { t } = useLanguage();
@@ -42,7 +43,10 @@ export default function TechnicalPage({ selectedCoins, timeDays }) {
       </div>
 
       {/* Price + SMA */}
-      <h3 className="section-title">{activeCoin} — Price & Moving Averages</h3>
+      <h3 className="section-title" style={{ position: "relative" }}>
+        {activeCoin} — Price & Moving Averages
+        <IndicatorInfo indicatorKey="sma" />
+      </h3>
       <PriceChart
         data={history}
         lines={[
@@ -54,7 +58,10 @@ export default function TechnicalPage({ selectedCoins, timeDays }) {
       />
 
       {/* RSI */}
-      <h3 className="section-title mt-8">{activeCoin} — RSI (14)</h3>
+      <h3 className="section-title mt-8" style={{ position: "relative" }}>
+        {activeCoin} — RSI (14)
+        <IndicatorInfo indicatorKey="rsi" />
+      </h3>
       <PriceChart
         data={history}
         lines={[{ key: "rsi", color: "#e94560", width: 1.5, name: "RSI(14)" }]}
@@ -69,7 +76,10 @@ export default function TechnicalPage({ selectedCoins, timeDays }) {
       />
 
       {/* MACD */}
-      <h3 className="section-title mt-8">{activeCoin} — MACD (12, 26, 9)</h3>
+      <h3 className="section-title mt-8" style={{ position: "relative" }}>
+        {activeCoin} — MACD (12, 26, 9)
+        <IndicatorInfo indicatorKey="macd" />
+      </h3>
       <PriceChart
         data={history.map((d) => ({
           ...d,
@@ -87,7 +97,10 @@ export default function TechnicalPage({ selectedCoins, timeDays }) {
       />
 
       {/* Bollinger Bands */}
-      <h3 className="section-title mt-8">{activeCoin} — Bollinger Bands (20, 2)</h3>
+      <h3 className="section-title mt-8" style={{ position: "relative" }}>
+        {activeCoin} — Bollinger Bands (20, 2)
+        <IndicatorInfo indicatorKey="bollinger" />
+      </h3>
       <PriceChart
         data={history}
         lines={[
