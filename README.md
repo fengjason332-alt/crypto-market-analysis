@@ -1,5 +1,7 @@
 # Crypto Market Analysis
 
+> **[Live Demo](https://crypto-market-analysis-rho.vercel.app)** — CryptoScope React frontend with live CoinGecko data
+
 **Can freely available market data + standard ML techniques produce meaningful next-day signals for BTC, ETH, and SOL?**
 
 A Python data pipeline + interactive dashboards built to find out.
